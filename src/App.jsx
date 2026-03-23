@@ -76,6 +76,8 @@ export default function App() {
   const [customList, setCustomList] = useState([]);
   const [customSearch, setCustomSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [showManualAdd, setShowManualAdd] = useState(false);
+  const [manualForm, setManualForm] = useState({ name: "", address: "", cuisine: "", price: "$$", vibe: "Casual" });
 
   const [phase, setPhase] = useState("idle");
   const [hand, setHand] = useState([]);
@@ -151,6 +153,19 @@ export default function App() {
   };
 
   const confirm = () => { if (selected === null) return; setWinner(hand[selected]); setPhase("winner"); };
+
+  const submitManual = () => {
+    if (!manualForm.name.trim()) return;
+    const name = manualForm.name.trim();
+    const address = manualForm.address.trim() || name;
+    const cuisine = manualForm.cuisine.trim() || "Restaurant";
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + " San Francisco")}`;
+    const openTableUrl = `https://www.opentable.com/s?term=${encodeURIComponent(name)}&covers=2&lang=en-US`;
+    const newR = { name, address, cuisine, price: manualForm.price, vibe: manualForm.vibe, neighborhood: "San Francisco", mapsUrl, openTableUrl, website: null };
+    setCustomList(p => [...p, newR]);
+    setManualForm({ name: "", address: "", cuisine: "", price: "$$", vibe: "Casual" });
+    setShowManualAdd(false);
+  };
 
   const sections = [
     { key: "cuisine", label: "CUISINE", opts: allCuisines, color: "#e8c84a" },
@@ -239,13 +254,41 @@ export default function App() {
                   </div>
                 )}
                 {customList.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
                     {customList.map(r => (
                       <div key={r.name} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 10px 5px 12px", borderRadius: "100px", background: "rgba(232,200,74,0.1)", border: "1px solid rgba(232,200,74,0.2)" }}>
                         <span style={{ fontSize: "12px", color: "rgba(232,200,74,0.9)", fontWeight: "600", fontFamily: "'DM Sans',sans-serif" }}>{r.name}</span>
                         <button onClick={() => setCustomList(p => p.filter(x => x.name !== r.name))} style={{ background: "none", border: "none", color: "rgba(255,80,80,0.5)", cursor: "pointer", fontSize: "13px", padding: "0", lineHeight: 1 }}>✕</button>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* manual add toggle */}
+                <button onClick={() => setShowManualAdd(v => !v)} style={{ width: "100%", padding: "8px", borderRadius: "10px", border: "1px dashed rgba(255,255,255,0.1)", background: "transparent", color: "rgba(255,255,255,0.25)", fontSize: "11px", fontFamily: "'DM Mono',monospace", cursor: "pointer", letterSpacing: "1px" }}>
+                  {showManualAdd ? "▲ CANCEL" : "+ CAN'T FIND IT? ADD MANUALLY"}
+                </button>
+
+                {showManualAdd && (
+                  <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px", animation: "fadeUp 0.2s ease forwards" }}>
+                    {[
+                      { key: "name", placeholder: "Restaurant name *", required: true },
+                      { key: "address", placeholder: "Address (optional)" },
+                      { key: "cuisine", placeholder: "Cuisine (e.g. Italian, Japanese)" },
+                    ].map(f => (
+                      <input key={f.key} value={manualForm[f.key]} onChange={e => setManualForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder} style={{ width: "100%", padding: "9px 13px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "white", fontSize: "13px", fontFamily: "'DM Sans',sans-serif", outline: "none" }} />
+                    ))}
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <select value={manualForm.price} onChange={e => setManualForm(p => ({ ...p, price: e.target.value }))} style={{ flex: 1, padding: "9px 13px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.08)", background: "#1a1a2e", color: "white", fontSize: "13px", fontFamily: "'DM Sans',sans-serif", outline: "none" }}>
+                        {["$", "$$", "$$$", "$$$$"].map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                      <select value={manualForm.vibe} onChange={e => setManualForm(p => ({ ...p, vibe: e.target.value }))} style={{ flex: 2, padding: "9px 13px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.08)", background: "#1a1a2e", color: "white", fontSize: "13px", fontFamily: "'DM Sans',sans-serif", outline: "none" }}>
+                        {["Casual", "Date Night", "Special Occasion", "Fun & Lively", "Brunch", "Late Night", "Classic SF"].map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </div>
+                    <button onClick={submitManual} disabled={!manualForm.name.trim()} style={{ padding: "10px", borderRadius: "10px", border: "none", background: manualForm.name.trim() ? "linear-gradient(135deg,#e8c84a,#c8a020)" : "rgba(255,255,255,0.05)", color: manualForm.name.trim() ? "#0a0800" : "rgba(255,255,255,0.2)", fontSize: "13px", fontWeight: "700", fontFamily: "'Syne',sans-serif", cursor: manualForm.name.trim() ? "pointer" : "not-allowed", letterSpacing: "1px" }}>
+                      + ADD TO DECK
+                    </button>
                   </div>
                 )}
               </div>
